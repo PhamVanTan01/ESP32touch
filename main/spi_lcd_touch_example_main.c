@@ -22,7 +22,7 @@
  #include "lvgl.h"
  
 
- #include "esp_lcd_ili9341.h"
+ #include "esp_lcd_ili9341.h"//////
 
  #include "esp_lcd_touch_xpt2046.h"
 
