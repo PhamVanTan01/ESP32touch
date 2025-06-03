@@ -1,2 +1,2 @@
-source C:/Users/tanph/workspace/spi_lcd_touch/build/bootloader/gdbinit/symbols
-source C:/Users/tanph/workspace/spi_lcd_touch/build/bootloader/gdbinit/connect
+source D:/spi_lcd_touch/build/bootloader/gdbinit/symbols
+source D:/spi_lcd_touch/build/bootloader/gdbinit/connect

@@ -1,0 +1,2 @@
+source D:/spi_lcd_touch/build/gdbinit/symbols
+source D:/spi_lcd_touch/build/gdbinit/connect
