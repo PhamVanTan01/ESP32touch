@@ -2,18 +2,13 @@
 
 #include <string.h>
 
+#include "application/hmi_state.h"
+#include "config/ui_theme.h"
 #include "esp_log.h"
-
+#include "middleware/i18n/i18n_table.h"
 #include "lvgl.h"
 
 static const char *TAG = "ui_nav_bar";
-
-enum
-{
-    UI_NAV_BAR_HEIGHT = 42,
-    UI_NAV_MORE_PANEL_WIDTH = 140,
-    UI_NAV_MORE_PANEL_HEIGHT = 124
-};
 
 typedef struct
 {
@@ -21,6 +16,7 @@ typedef struct
     ui_screen_id_t screen_id;
 } nav_button_context_t;
 
+static nav_button_context_t s_home_context;
 static nav_button_context_t s_dashboard_context;
 static nav_button_context_t s_recipe_context;
 static nav_button_context_t s_vision_context;
@@ -49,7 +45,7 @@ static void set_button_active_style(lv_obj_t *button, bool is_active)
         lv_obj_set_style_bg_color(button, lv_palette_main(LV_PALETTE_INDIGO), 0);
         lv_obj_set_style_text_color(button, lv_color_white(), 0);
     } else {
-        lv_obj_set_style_bg_color(button, lv_color_hex(0x1A2438), 0);
+        lv_obj_set_style_bg_color(button, lv_color_hex(UI_THEME_COLOR_NAV_BUTTON_BG), 0);
         lv_obj_set_style_text_color(button, lv_palette_main(LV_PALETTE_GREY), 0);
     }
 }
@@ -115,11 +111,12 @@ static lv_obj_t *create_nav_button(lv_obj_t *parent,
     lv_obj_t *button = lv_button_create(parent);
     lv_obj_t *label = lv_label_create(button);
 
-    lv_obj_set_style_radius(button, 10, 0);
-    lv_obj_set_style_bg_color(button, lv_color_hex(0x1A2438), 0);
+    lv_obj_set_size(button, (lv_coord_t)UI_THEME_NAV_BUTTON_WIDTH, (lv_coord_t)UI_THEME_NAV_BUTTON_HEIGHT);
+    lv_obj_set_style_radius(button, (int32_t)UI_THEME_NAV_BUTTON_RADIUS, 0);
+    lv_obj_set_style_bg_color(button, lv_color_hex(UI_THEME_COLOR_NAV_BUTTON_BG), 0);
     lv_obj_set_style_border_width(button, 0, 0);
-    lv_obj_set_style_pad_hor(button, 10, 0);
-    lv_obj_set_style_pad_ver(button, 6, 0);
+    lv_obj_set_style_pad_hor(button, (int32_t)UI_THEME_NAV_BUTTON_PAD_HOR, 0);
+    lv_obj_set_style_pad_ver(button, (int32_t)UI_THEME_NAV_BUTTON_PAD_VER, 0);
     lv_obj_add_flag(button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);
 
     lv_label_set_text(label, label_text);
@@ -146,6 +143,7 @@ void ui_nav_bar_set_active(ui_nav_bar_t *nav_bar, ui_screen_id_t active_screen)
         return;
     }
 
+    set_button_active_style(nav_bar->button_home, active_screen == UI_SCREEN_HOME);
     set_button_active_style(nav_bar->button_dashboard, active_screen == UI_SCREEN_MAIN);
     set_button_active_style(nav_bar->button_recipe, active_screen == UI_SCREEN_RECIPE);
     set_button_active_style(nav_bar->button_vision, active_screen == UI_SCREEN_VISION_TUNING);
@@ -158,9 +156,15 @@ esp_err_t ui_nav_bar_create(lv_obj_t *parent,
                             ui_nav_bar_t *nav_bar)
 {
     lv_obj_t *button;
+    hmi_runtime_state_t state;
+    hmi_language_t lang = HMI_LANGUAGE_EN;
 
     if ((parent == NULL) || (nav_bar == NULL)) {
         return ESP_ERR_INVALID_ARG;
+    }
+
+    if (hmi_state_get(&state) == ESP_OK) {
+        lang = state.current_language;
     }
 
     (void)memset(nav_bar, 0, sizeof(*nav_bar));
@@ -170,16 +174,18 @@ esp_err_t ui_nav_bar_create(lv_obj_t *parent,
         return ESP_ERR_NO_MEM;
     }
 
-    lv_obj_set_size(nav_bar->root, lv_pct(100), UI_NAV_BAR_HEIGHT);
+    lv_obj_set_size(nav_bar->root, lv_pct(100), UI_THEME_NAV_BAR_HEIGHT);
     lv_obj_set_style_radius(nav_bar->root, 0, 0);
     lv_obj_set_style_border_width(nav_bar->root, 0, 0);
-    lv_obj_set_style_bg_color(nav_bar->root, lv_color_hex(0x0E1526), 0);
-    lv_obj_set_style_pad_all(nav_bar->root, 4, 0);
+    lv_obj_set_style_bg_color(nav_bar->root, lv_color_hex(UI_THEME_COLOR_NAV_BAR_BG), 0);
+    lv_obj_set_style_pad_all(nav_bar->root, (int32_t)UI_THEME_NAV_BUTTON_GAP, 0);
+    lv_obj_set_style_pad_column(nav_bar->root, (int32_t)UI_THEME_NAV_BUTTON_GAP, 0);
     lv_obj_set_layout(nav_bar->root, LV_LAYOUT_FLEX);
     lv_obj_set_flex_flow(nav_bar->root, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(nav_bar->root, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_clear_flag(nav_bar->root, LV_OBJ_FLAG_SCROLLABLE);
 
+    init_context(&s_home_context, nav_bar, UI_SCREEN_HOME);
     init_context(&s_dashboard_context, nav_bar, UI_SCREEN_MAIN);
     init_context(&s_recipe_context, nav_bar, UI_SCREEN_RECIPE);
     init_context(&s_vision_context, nav_bar, UI_SCREEN_VISION_TUNING);
@@ -189,11 +195,12 @@ esp_err_t ui_nav_bar_create(lv_obj_t *parent,
     init_context(&s_maintenance_context, nav_bar, UI_SCREEN_MAINTENANCE);
     init_context(&s_login_context, nav_bar, UI_SCREEN_LOGIN);
 
-    nav_bar->button_dashboard = create_nav_button(nav_bar->root, "Dash", &s_dashboard_context, nav_button_event_cb, NULL);
-    nav_bar->button_recipe = create_nav_button(nav_bar->root, "Recipe", &s_recipe_context, nav_button_event_cb, NULL);
-    nav_bar->button_vision = create_nav_button(nav_bar->root, "Vision", &s_vision_context, nav_button_event_cb, NULL);
-    nav_bar->button_alarms = create_nav_button(nav_bar->root, "Alarms", &s_alarms_context, nav_button_event_cb, NULL);
-    nav_bar->button_more = create_nav_button(nav_bar->root, "More", NULL, nav_more_button_event_cb, nav_bar);
+    nav_bar->button_home = create_nav_button(nav_bar->root, i18n_table_get(lang, I18N_KEY_HOME), &s_home_context, nav_button_event_cb, NULL);
+    nav_bar->button_dashboard = create_nav_button(nav_bar->root, i18n_table_get(lang, I18N_KEY_NAV_DASH), &s_dashboard_context, nav_button_event_cb, NULL);
+    nav_bar->button_recipe = create_nav_button(nav_bar->root, i18n_table_get(lang, I18N_KEY_RECIPE), &s_recipe_context, nav_button_event_cb, NULL);
+    nav_bar->button_vision = create_nav_button(nav_bar->root, i18n_table_get(lang, I18N_KEY_VISION_TUNING), &s_vision_context, nav_button_event_cb, NULL);
+    nav_bar->button_alarms = create_nav_button(nav_bar->root, i18n_table_get(lang, I18N_KEY_ALARMS), &s_alarms_context, nav_button_event_cb, NULL);
+    nav_bar->button_more = create_nav_button(nav_bar->root, i18n_table_get(lang, I18N_KEY_NAV_MORE), NULL, nav_more_button_event_cb, nav_bar);
 
     if (!ui_manager_can_access_screen(UI_SCREEN_RECIPE)) {
         lv_obj_add_flag(nav_bar->button_recipe, LV_OBJ_FLAG_HIDDEN);
@@ -204,6 +211,9 @@ esp_err_t ui_nav_bar_create(lv_obj_t *parent,
     if (!ui_manager_can_access_screen(UI_SCREEN_ALARMS)) {
         lv_obj_add_flag(nav_bar->button_alarms, LV_OBJ_FLAG_HIDDEN);
     }
+    if (!ui_manager_can_access_screen(UI_SCREEN_HOME)) {
+        lv_obj_add_flag(nav_bar->button_home, LV_OBJ_FLAG_HIDDEN);
+    }
 
     nav_bar->more_panel = lv_obj_create(parent);
     if (nav_bar->more_panel == NULL) {
@@ -211,35 +221,37 @@ esp_err_t ui_nav_bar_create(lv_obj_t *parent,
         return ESP_ERR_NO_MEM;
     }
 
-    lv_obj_set_size(nav_bar->more_panel, UI_NAV_MORE_PANEL_WIDTH, UI_NAV_MORE_PANEL_HEIGHT);
-    lv_obj_align(nav_bar->more_panel, LV_ALIGN_BOTTOM_RIGHT, -8, -(UI_NAV_BAR_HEIGHT + 8));
-    lv_obj_set_style_radius(nav_bar->more_panel, 12, 0);
-    lv_obj_set_style_bg_color(nav_bar->more_panel, lv_color_hex(0x162033), 0);
+    lv_obj_set_size(nav_bar->more_panel, UI_THEME_NAV_MORE_PANEL_WIDTH, UI_THEME_NAV_MORE_PANEL_HEIGHT);
+    lv_obj_align(nav_bar->more_panel, LV_ALIGN_BOTTOM_RIGHT,
+             (lv_coord_t)(-(int)UI_THEME_NAV_PANEL_OFFSET),
+             (lv_coord_t)(-(int)(UI_THEME_NAV_BAR_HEIGHT + UI_THEME_NAV_PANEL_OFFSET_Y)));
+    lv_obj_set_style_radius(nav_bar->more_panel, UI_THEME_CARD_RADIUS, 0);
+    lv_obj_set_style_bg_color(nav_bar->more_panel, lv_color_hex(UI_THEME_COLOR_NAV_MORE_PANEL), 0);
     lv_obj_set_style_border_width(nav_bar->more_panel, 1, 0);
     lv_obj_set_style_border_color(nav_bar->more_panel, lv_palette_main(LV_PALETTE_BLUE_GREY), 0);
-    lv_obj_set_style_pad_all(nav_bar->more_panel, 6, 0);
+    lv_obj_set_style_pad_all(nav_bar->more_panel, (int32_t)UI_THEME_NAV_MORE_PANEL_PAD, 0);
     lv_obj_set_layout(nav_bar->more_panel, LV_LAYOUT_FLEX);
     lv_obj_set_flex_flow(nav_bar->more_panel, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(nav_bar->more_panel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_clear_flag(nav_bar->more_panel, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(nav_bar->more_panel, LV_OBJ_FLAG_HIDDEN);
 
-    button = create_nav_button(nav_bar->more_panel, "Statistics", &s_statistics_context, nav_button_event_cb, NULL);
+    button = create_nav_button(nav_bar->more_panel, i18n_table_get(lang, I18N_KEY_STATISTICS), &s_statistics_context, nav_button_event_cb, NULL);
     if (!ui_manager_can_access_screen(UI_SCREEN_STATISTICS)) {
         lv_obj_add_flag(button, LV_OBJ_FLAG_HIDDEN);
     }
 
-    button = create_nav_button(nav_bar->more_panel, "Calibration", &s_calibration_context, nav_button_event_cb, NULL);
+    button = create_nav_button(nav_bar->more_panel, i18n_table_get(lang, I18N_KEY_CALIBRATION), &s_calibration_context, nav_button_event_cb, NULL);
     if (!ui_manager_can_access_screen(UI_SCREEN_CALIBRATION)) {
         lv_obj_add_flag(button, LV_OBJ_FLAG_HIDDEN);
     }
 
-    button = create_nav_button(nav_bar->more_panel, "Maintenance", &s_maintenance_context, nav_button_event_cb, NULL);
+    button = create_nav_button(nav_bar->more_panel, i18n_table_get(lang, I18N_KEY_MAINTENANCE), &s_maintenance_context, nav_button_event_cb, NULL);
     if (!ui_manager_can_access_screen(UI_SCREEN_MAINTENANCE)) {
         lv_obj_add_flag(button, LV_OBJ_FLAG_HIDDEN);
     }
 
-    button = create_nav_button(nav_bar->more_panel, "Login", &s_login_context, nav_button_event_cb, NULL);
+    button = create_nav_button(nav_bar->more_panel, i18n_table_get(lang, I18N_KEY_LOGIN), &s_login_context, nav_button_event_cb, NULL);
     if (!ui_manager_can_access_screen(UI_SCREEN_LOGIN)) {
         lv_obj_add_flag(button, LV_OBJ_FLAG_HIDDEN);
     }

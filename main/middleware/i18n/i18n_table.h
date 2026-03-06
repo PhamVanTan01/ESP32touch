@@ -1,0 +1,74 @@
+#pragma once
+
+#include "config/hmi_schema.h"
+
+typedef enum
+{
+    I18N_KEY_DASHBOARD = 0,
+    I18N_KEY_RECIPE,
+    I18N_KEY_CALIBRATION,
+    I18N_KEY_VISION_TUNING,
+    I18N_KEY_STATISTICS,
+    I18N_KEY_ALARMS,
+    I18N_KEY_MAINTENANCE,
+    I18N_KEY_LOGIN,
+    /* Login form */
+    I18N_KEY_LOGIN_TITLE,
+    I18N_KEY_USERNAME,
+    I18N_KEY_PASSWORD,
+    I18N_KEY_LOGIN_BUTTON,
+    I18N_KEY_LOGIN_HINT,
+    I18N_KEY_ERR_WRONG_CREDENTIALS,
+    I18N_KEY_ERR_LOGIN_FAILED,
+    I18N_KEY_LOGIN_SUCCESS,
+    I18N_KEY_ERR_DASHBOARD_FAILED,
+    I18N_KEY_LOGIN_LOCKED_UNTIL,
+    /* Nav short labels */
+    I18N_KEY_NAV_DASH,
+    I18N_KEY_NAV_MORE,
+    I18N_KEY_BACK,  /* Back button text: "◄ Back" / "◄ Quay lại" */
+    I18N_KEY_HOME,
+    /* Status bar format: "Role: %s  Comm: %s" */
+    I18N_KEY_STATUS_ROLE_COMM,
+    /* Language selector */
+    I18N_KEY_LANGUAGE,
+    I18N_KEY_LANG_VI,
+    I18N_KEY_LANG_EN,
+    I18N_KEY_LANG_ES,
+    I18N_KEY_LANG_ZH,
+    /* Help (one key per screen). */
+    I18N_KEY_HELP,
+    I18N_KEY_HELP_SPLASH,
+    I18N_KEY_HELP_DASHBOARD,
+    I18N_KEY_HELP_RECIPE,
+    I18N_KEY_HELP_CALIBRATION,
+    I18N_KEY_HELP_VISION_TUNING,
+    I18N_KEY_HELP_STATISTICS,
+    I18N_KEY_HELP_ALARMS,
+    I18N_KEY_HELP_MAINTENANCE,
+    I18N_KEY_HELP_LOGIN,
+    I18N_KEY_HELP_HOME,
+    /* Splash (Phase 4.1). */
+    I18N_KEY_SPLASH_TEXT,
+    /* Alarm (Phase 3.1). */
+    I18N_KEY_ALARM_CRITICAL,
+    I18N_KEY_ALARM_WARNING,
+    I18N_KEY_ALARM_INFO,
+    I18N_KEY_ACK,
+    I18N_KEY_ALARMS_COUNT,
+    I18N_KEY_NO_ALARMS,
+    /* Confirm password (Phase 5.1). */
+    I18N_KEY_CONFIRM_PASSWORD_TITLE,
+    I18N_KEY_CONFIRM_PASSWORD_MSG,
+    I18N_KEY_OK,
+    I18N_KEY_CANCEL,
+    I18N_KEY_FACTORY_RESET,
+    I18N_KEY_EXPORT_LOG,
+    I18N_KEY_AUDIT_LOG,
+    /* Login ISO: Shutdown (IEC 62624). */
+    I18N_KEY_SHUTDOWN,
+    I18N_KEY_SHUTDOWN_CONFIRM,
+    I18N_KEY_COUNT
+} i18n_key_t;
+
+const char *i18n_table_get(hmi_language_t language, i18n_key_t key);
